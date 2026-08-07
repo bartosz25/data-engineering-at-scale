@@ -1,0 +1,8 @@
+[project]
+name = "01-introduction-distributed-data-processing"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "Faker==40.36.0"
+]
