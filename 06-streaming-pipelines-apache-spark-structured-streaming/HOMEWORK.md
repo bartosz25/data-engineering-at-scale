@@ -9,7 +9,6 @@ Micro-batch processing is the default execution model in Spark Structured Stream
 1. **Explain** what the noisy neighbor problem means in the context of Spark Structured Streaming micro-batch execution. Your explanation should cover:
    - What a "noisy neighbor" is in this context.
    - How a slow or resource-heavy micro-batch affects the batches that follow it.
-   - Do you see other noise than the noise between subsequent micro-batches? Hint: look inside the micro-batch.
 
 2. **Demonstrate** the problem by modifying [`kafka_consumer_micro_batch.py`](kafka_consumer_micro_batch.py).
    Simulate a noisy neighbor by introducing artificial slowness inside `print_visit_rows_from_foreach_partition`. 
@@ -17,7 +16,8 @@ Micro-batch processing is the default execution model in Spark Structured Stream
 
 ## Exercise 2 — Beyond Windows: Other Stateful Operations
 
-The windowed aggregation shown in [`browsers_stats_generation_stateful_job.py`](browsers_stats_generation_stateful_job.py) is one way to maintain state across micro-batches. Spark Structured Streaming supports several other stateful processing capabilities.
+The windowed aggregation shown in [`browsers_stats_generation_stateful_job.py`](browsers_stats_generation_stateful_job.py) is one way to maintain state across micro-batches. 
+Spark Structured Streaming supports several other stateful processing capabilities.
 
 **Tasks:**
 

@@ -1,0 +1,2 @@
+CHECKPOINTS_DIR = '/tmp/data-engineering-at-scale/06-streaming-pipelines-apache-spark-structured-streaming/checkpoints'
+DATA_DIR = '/tmp/data-engineering-at-scale/06-streaming-pipelines-apache-spark-structured-streaming/data/input'
