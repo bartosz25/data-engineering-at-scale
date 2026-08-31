@@ -1,0 +1,9 @@
+[project]
+name = "05-apache-kafka-event-messaging"
+version = "0.1.0"
+description = "Apache Kafka demo scripts: topic composition, multi-reader, consumer scaling, progress tracking, and queues (share groups)."
+requires-python = ">=3.11"
+dependencies = [
+    "confluent-kafka==2.15.0",
+    "colorama==0.4.6"
+]
