@@ -29,11 +29,6 @@ log = logging.getLogger(__name__)
 
 def main(input_dir: Path, workers: int) -> None:
     csv_files = sorted(input_dir.glob("*.csv"))
-    if not csv_files:
-        log.warning("no CSV files found in '%s'", input_dir)
-        return
-
-    log.info("found %d file(s) in '%s' — using %d worker(s)", len(csv_files), input_dir, workers)
 
     global_result = GlobalResult()
     start = time.perf_counter()

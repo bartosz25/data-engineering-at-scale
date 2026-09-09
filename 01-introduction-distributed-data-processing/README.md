@@ -65,10 +65,6 @@ the multi-threaded and distributed variants are measured.
 uv run python process_single_threaded.py --input-dir DIR
 ```
 
-| Flag | Description |
-|---|---|
-| `--input-dir DIR` | Directory containing the CSV files to process |
-
 ---
 
 ## Approach 2 — Multi-threaded
@@ -90,4 +86,56 @@ system does — independent workers, each owning a slice of the data.
 
 ```bash
 ./orchestrate.sh <input-dir>
+```
+
+
+---
+# Batch vs. streaming demos
+## Batch
+1. Run the batch processing code:
+```shell
+uv run python batch_streaming/batch_processing.py
+```
+
+You should see 0 files processed.
+
+2. Create a few files in the demo dir:
+```shell
+echo "a\nb\nc" >> /tmp/data-engineering-at-scale/01-introduction-distributed-data-processing/batch_streaming/batch/1.txt
+echo "d\ne\nf" >> /tmp/data-engineering-at-scale/01-introduction-distributed-data-processing/batch_streaming/batch/2.txt
+```
+
+3. Run the batch processing code again:
+```shell
+uv run python batch_streaming/batch_processing.py
+```
+
+You should see 2 files processed.
+
+*If you want to run the processing again, you need an explicit action. Of course, you can automate
+the process with CRON jobs or more advanced data orchestrators, anyway, each invocation will process
+a bunch of existing files*
+
+## Streaming
+1. Run the batch processing code:
+```shell
+uv run python batch_streaming/stream_processing.py
+```
+
+The code starts a continuous streaming reader that watches for new files created in the 
+streaming directory.
+
+2. Create some files first: 
+```shell
+echo "1\n2\n3" >> /tmp/data-engineering-at-scale/01-introduction-distributed-data-processing/batch_streaming/streaming/1.txt
+echo "4\n5\n6" >> /tmp/data-engineering-at-scale/01-introduction-distributed-data-processing/batch_streaming/streaming/2.txt
+```
+
+After creating those files you should see the reader picking them almost instantaneously. And moreover, it reads 
+only new changes every time.
+
+3. Clean up:
+```shell
+rm -rf /tmp/data-engineering-at-scale/01-introduction-distributed-data-processing/batch_streaming/batch
+rm -rf /tmp/data-engineering-at-scale/01-introduction-distributed-data-processing/batch_streaming/streaming
 ```
