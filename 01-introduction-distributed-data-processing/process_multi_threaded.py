@@ -1,23 +1,11 @@
-"""
-Multi-Threaded Processing
-=========================
-Reads every CSV file in a directory concurrently using a thread pool.
-The per-file processing logic is identical to process_single_threaded.py —
-only the orchestration changes.
-
-Note on the GIL: Python threads share one interpreter lock, so CPU-bound
-work (pure number crunching) does NOT speed up with threads. However,
-file I/O releases the GIL while waiting for the OS, so multiple threads
-can read different files simultaneously and we do get a real speedup here.
-"""
-
 import argparse
 import logging
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from common import GlobalResult, print_summary, process_file
+from common import FileResult, GlobalResult, print_summary, process_file
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,6 +15,21 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+def _process_file(path: Path) -> FileResult:
+    # All threads share the same PID. Watch the thread IDs — you will see them
+    # interleave in the log, but the GIL means only one runs Python at a time,
+    # so the per-file elapsed times add up close to the total wall-clock time.
+    tid = threading.get_ident() % 10_000   # shorten for readability
+    log.info("[Thread-%04d]  GIL acquired — START  %s", tid, path.name)
+    t0 = time.perf_counter()
+    result = process_file(path)
+    log.info(
+        "[Thread-%04d]  GIL released — END    %s  (%.2fs)",
+        tid, path.name, time.perf_counter() - t0,
+    )
+    return result
+
+
 def main(input_dir: Path, workers: int) -> None:
     csv_files = sorted(input_dir.glob("*.csv"))
 
@@ -34,7 +37,7 @@ def main(input_dir: Path, workers: int) -> None:
     start = time.perf_counter()
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(process_file, path): path for path in csv_files}
+        futures = {executor.submit(_process_file, path): path for path in csv_files}
         for future in as_completed(futures):
             global_result.file_results.append(future.result())
 

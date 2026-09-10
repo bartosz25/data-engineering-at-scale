@@ -77,7 +77,19 @@ orchestration changes.
 uv run python process_multi_threaded.py --input-dir DIR --workers N
 ```
 
-## Approach 3 — Locally distributed
+Surprise, surprise, the execution time won't be better than for the single-threaded code. 
+It's because of the GIL. Python threads share one interpreter lock that's why you saw almost
+sequential START/END/START events in the logs.
+
+To improve the process and use the real simultaneous power of the CPUs, let's run the 
+[process_multi_process.py](process_multi_process.py) that uses `ProcessPoolExecutor` instead of the
+`ThreadPoolExecutor`:
+
+```bash
+uv run python process_multi_process.py --input-dir DIR --workers N
+```
+
+## Approach 3 — Locally distributed with separate tasks
 
 `orchestrate.sh` discovers all CSV files in a directory and launches one
 independent `process_single_threaded.py` process per file. All processes run in
