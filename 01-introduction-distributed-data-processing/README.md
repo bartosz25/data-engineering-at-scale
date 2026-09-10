@@ -89,6 +89,9 @@ To improve the process and use the real simultaneous power of the CPUs, let's ru
 uv run python process_multi_process.py --input-dir DIR --workers N
 ```
 
+Each worker runs in its own Python interpreter with its own GIL, so the work truly runs 
+in parallel across cores. The trade-off is higher memory usage and pickling overhead when passing data between processes.
+
 ## Approach 3 — Locally distributed with separate tasks
 
 `orchestrate.sh` discovers all CSV files in a directory and launches one

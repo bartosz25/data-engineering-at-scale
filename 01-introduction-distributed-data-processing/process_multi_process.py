@@ -1,20 +1,3 @@
-"""
-Multi-Process Processing
-========================
-Reads every CSV file in a directory concurrently using a process pool.
-The per-file processing logic is identical to process_single_threaded.py —
-only the orchestration changes.
-
-Why processes instead of threads: each worker runs in its own Python
-interpreter with its own GIL, so CPU-bound work (CSV parsing, arithmetic)
-truly runs in parallel across cores. The trade-off is higher memory usage
-and pickling overhead when passing data between processes.
-
-Note: the `if __name__ == "__main__"` guard is required for ProcessPoolExecutor
-on macOS and Windows (both use the "spawn" start method), where each worker
-process re-imports this module at startup.
-"""
-
 import argparse
 import logging
 import os
