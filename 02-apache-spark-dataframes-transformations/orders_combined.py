@@ -7,7 +7,7 @@ orders = (
     spark.read
     .option("header", "true")
     .option("inferSchema", "true")
-    .csv("data/orders_region_*.csv")
+    .csv("data")
 )
 
 # Cache after loading: both transformations below fan out from this DataFrame.
