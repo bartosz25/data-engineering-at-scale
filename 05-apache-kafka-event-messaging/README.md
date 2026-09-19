@@ -154,15 +154,16 @@ The committed offset is the next offset to read, not the last one read. Committi
 ---
 
 ## Demo 5 — Queues (`queues_`)
-Files: `[queues_consumer.py](queues_consumer.py)`, `[queues_producer.py](queues_producer.py)`
+Files: `[queues_consumer.py](queues_consumer.py)`, `[queues_producer.py](queues_producer.py)`,
+`[queues_regular_consumer.py](queues_regular_consumer.py)`
 
-Apache Kafka 4.0 introduced *Share Groups* (KIP-932) — a new consumer protocol that 
-delivers true queue semantics. Unlike a regular consumer group where each consumer owns 
-dedicated partitions and reads their full stream, a share group hands individual 
-messages to whichever worker polls next. Each message is delivered to **exactly one** 
+Apache Kafka 4.0 introduced *Share Groups* (KIP-932) — a new consumer protocol that
+delivers true queue semantics. Unlike a regular consumer group where each consumer owns
+dedicated partitions and reads their full stream, a share group hands individual
+messages to whichever worker polls next. Each message is delivered to **exactly one**
 worker in the group, regardless of which partition it came from.
 
-The key API difference: share consumers call `acknowledge(msg)` instead of `commit()`. 
+The key API difference: share consumers call `acknowledge(msg)` instead of `commit()`.
 An unacknowledged message (e.g. after a worker crash) is automatically redelivered to
 another worker.
 
@@ -186,19 +187,40 @@ uv run queues_consumer.py --worker-id 2
 ```
 
 Each `job_id` appears in **only one** worker's output. The load is distributed across
-workers without any partition assignment — the broker decides which worker gets the 
+workers without any partition assignment — the broker decides which worker gets the
 next message.
 
-
-Notice that `job_id=0` is on `partition=0 offset=0` in worker 1's output and never appears in workers 2 or 3. 
+Notice that `job_id=0` is on `partition=0 offset=0` in worker 1's output and never appears in workers 2 or 3.
 This is the defining difference from a regular consumer group.
 
-> If you replaced `ShareConsumer` 
-with a regular `Consumer` using the same `group.id`, each worker would be 
-assigned dedicated partitions and would read every message on those partitions 
-in order — the messages would NOT be shared between workers.
+The `queues-demo` topic has **one partition**. A regular consumer group can assign each
+partition to at most one member. Start two workers using a plain `Consumer`:
 
+1. Keep `queues_producer.py` running from above (or restart it).
 
-> Use share groups when you want to parallelize processing of a 
+2. Start two workers in separate terminals:
+
+```bash
+# terminal 1
+uv run queues_regular_consumer.py --worker-id 1
+
+# terminal 2, wait for the first worker to start processing the data
+uv run queues_regular_consumer.py --worker-id 2
+```
+
+Among these 2 workers running only one will be processing the topic because it has only
+1 partition and in the classical mode, the consumers don't process the same partition.
+
+This is the opposite of the share group: instead of both workers sharing the work, one
+worker does all the work and the second worker is completely unused.
+
+| | Share Group (`queues_consumer.py`) | Regular Group (`queues_regular_consumer.py`) |
+|---|---|---|
+| Both workers receive data | Yes — each message goes to one worker | No — only the worker owning the partition |
+| Parallelism on 1 partition | Yes | No |
+| Message ordering | Not guaranteed | Guaranteed within the partition |
+| API | `acknowledge()` | `commit()` |
+
+> Use share groups when you want to parallelize processing of a
 high-volume stream and message ordering is not required. Use regular consumer groups when
 you need strict per-key ordering or partition-level isolation.

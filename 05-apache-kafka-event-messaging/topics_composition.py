@@ -3,8 +3,8 @@ import json
 import time
 
 from colorama import Style
-from confluent_kafka import Consumer, Producer, TopicPartition
-from confluent_kafka.admin import AdminClient, NewTopic
+from confluent_kafka import Consumer, Producer
+from confluent_kafka.admin import AdminClient
 
 from shared_config import BOOTSTRAP_SERVERS
 
@@ -15,7 +15,7 @@ class Message:
     key: str
     body: str
 
-def send_records() -> None:
+def send_records(with_duplicated_keys: bool, with_unbalanced_keys: bool) -> None:
     print('Produced records and their stats...')
     print('-' * 42)
 
@@ -32,7 +32,7 @@ def send_records() -> None:
             val = json.loads(value)
             print(f'{key:<8}  {val:<10}  {msg.partition():>9}  {msg.offset():>6}')
 
-    for m in [
+    records = [
         Message(key='France', body='Paris'),
         Message(key='England', body='London'),
         Message(key='Poland', body='Warsaw'),
@@ -41,7 +41,13 @@ def send_records() -> None:
         Message(key='England', body='Manchester'),
         Message(key='Poland', body='Poznan'),
         Message(key='Germany', body='Munich'),
-    ]:
+    ]
+    if with_duplicated_keys:
+        records.append(Message(key='France', body='Rennes'))
+        records.append(Message(key='France', body='Rennes'))
+    if with_unbalanced_keys:
+        records.append(Message(key='France', body='Lille'))
+    for m in records:
         producer.produce(TOPIC, key=m.key, value=json.dumps(m.body), callback=on_delivery)
 
     print('Since the producer is asynchronous, we force delivering all the messages that might be pending in memory...')
@@ -78,9 +84,11 @@ def consume() -> None:
 
         val = json.loads(msg.value())
         partition_counts[msg.partition()] += 1
-        print(f'{"PARTITION":>9}  {"OFFSET":>6}  {"KEY":<8}  {"PAGE"}')
-        print('-' * 42)
-        print(f'{msg.partition():>9}  {msg.offset():>6}  {msg.key().decode():<8}  {val}')
+        print(f'{"PARTITION":>9}  {"OFFSET":>6}  {"KEY":<8}  {"PAGE"}  {"TIMESTAMP"}')
+        print('-' * 56)
+        _, ts_ms = msg.timestamp()
+        ts = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(ts_ms / 1000))
+        print(f'{msg.partition():>9}  {msg.offset():>6} {msg.key().decode():<8}  {val:<6}  {ts}')
         received += 1
         # Commit means we have successfully processed the message and don't want to reprocess it
         # if the consumer crashes or is restarted
@@ -110,8 +118,28 @@ if __name__ == '__main__':
         print(f'Got existing topic={Style.BRIGHT}{existing_topic}{Style.RESET_ALL}')
 
 
-    send_records()
+    send_records(
+        with_duplicated_keys=False, with_unbalanced_keys=False
+    )
 
-    response = input('Ready to move to the consumer?').strip().lower()
+    response_1 = input('Ready to move to the consumer?').strip().lower()
 
     consume()
+    print('-------------------------------------------------------------------------')
+    print('-------------------------------------------------------------------------')
+    print('Sending one additional record for France, showing unbalanced partition')
+    response_2 = input('Ready to move to the consumer and see the unbalanced partitions?').strip().lower()
+    send_records(
+        with_duplicated_keys=False, with_unbalanced_keys=True
+    )
+    consume()
+    print('-------------------------------------------------------------------------')
+    print('-------------------------------------------------------------------------')
+    print('Sending two additional records for France, showing duplicated keys')
+    response_3 = input('Ready to move to the consumer and see the duplicated keys?').strip().lower()
+    send_records(
+        with_duplicated_keys=True, with_unbalanced_keys=False
+    )
+    consume()
+
+    print('Done!')
