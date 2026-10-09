@@ -1,0 +1,22 @@
+# This is a Databricks asset bundle definition for env_variables_dab.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: env_variables_dab
+  uuid: 5c0eb41b-f1bd-4add-9bc6-2591e3b645bf
+
+include:
+  - resources/*.yml
+
+
+artifacts:
+  python_artifact:
+    type: whl
+    build: uv build --sdist --wheel
+
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: HOST
