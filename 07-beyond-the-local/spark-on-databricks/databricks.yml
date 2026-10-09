@@ -19,4 +19,4 @@ targets:
     mode: development
     default: true
     workspace:
-      host: HOST
+      host: YOUR ID

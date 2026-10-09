@@ -1,4 +1,4 @@
-# Variables in Databricks Asset Bundles demo
+# Apache Spark on Databricks
 
 1. Authenticate to your Databricks workspace, if you have not done so already:
 ```bash
